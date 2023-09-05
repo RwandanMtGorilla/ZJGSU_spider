@@ -1,0 +1,31 @@
+{
+    "cookies": {
+        "JSESSIONID": "E6666",
+        "route": "4445"
+    },
+    "headers": {
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Accept-Language": "zh-CN,zh;q=0.9",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+        "Origin": "",
+        "Pragma": "no-cache",
+        "Referer": "http://124.160.64.163/jwglxt/xsxk/zzxkyzb_cxZzxkYzbIndex.html?gnmkdm=N253512&layout=default&su=2212190320",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
+        "X-Requested-With": "XMLHttpRequest"
+    },
+    "params": {
+        "gnmkdm": "N253512",
+        "su": "2212190000"
+    },
+    "classes": [
+        ["jxb_ids=5233c82B&njdm_id=2022&kklxdm=10&xklc=2&xkxnm=2023&xkxqm=3"],
+        ["jxb_ids=25079981F3jdm_id=2022&kklxdm=10&xklc=2&xkxnm=2023&xkxqm=3"],
+        ["jxb_ids=25079981F3jdm_id=2022&kklxdm=10&xklc=2&xkxnm=2023&xkxqm=3"],
+        ["jxb_ids=25079981F3jdm_id=2022&kklxdm=10&xklc=2&xkxnm=2023&xkxqm=3"]
+
+    
+    ]
+
+}
