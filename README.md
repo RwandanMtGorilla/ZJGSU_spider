@@ -84,6 +84,7 @@
 
 - 双击 `PostJson_tk_1.2.exe` 
 <img src="img/13.png" height="240">
+
 - 选择你存放 `.json` 文件的文件夹
 - 点击开始执行 如果不断弹出运行信息 即说明运行成功
 
