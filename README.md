@@ -1,5 +1,5 @@
 # zjgsu抢课脚本 
-## 使用教程（ 2023 - 2024 - 1 ）
+## 使用教程（*更新 2024 - 2025 - 1 ）
 
 ## 观前提醒：
 
@@ -27,8 +27,8 @@
 ## 文件构成：
 
 使用此脚本，必要的文件有两项：
-- `JSONs` 文件夹以及其中的`.json`文件（你需要手动配置的抢课信息）
-- `PostJson_tk_1.2.exe`（信息配置完成后执行抢课程序的脚本）[下载地址](https://github.com/RwandanMtGorilla/ZJGSU_spider/releases/tag/exe)
+- `JSONs` 文件夹以及其中的`.json`文件（你需要手动配置的抢课信息 请自行创建）
+- `ui_2.0.exe`（信息配置完成后执行抢课程序的脚本）[下载地址](https://github.com/RwandanMtGorilla/ZJGSU_spider/releases/tag/ui_2.0)
 
 使用前请检查两项项文件是否完整。
 
@@ -73,21 +73,21 @@
 
 *（例图中信息已经过混淆处理）*
 
-- 在`JSONs`文件夹中新建一个`.json`文件 将刚刚的信息复制进去并保存 (用一个你记得住的名字)(可以新建txt然后改后缀)
+- 在`JSONs`文件夹中新建一个`.json`文件 将刚刚的信息复制进去并保存 (用一个你记得住的名字)(可以新建txt然后改后缀)(如果需要抢多门课，则创建多个json文件)
 
 <img src="img/14.png" width="240">
 
 <img src="img/15.png" width="240">
 
 
-### 2. 脚本，启动！（请在config.test.json填写完整后进行）
+### 2. 脚本，启动！
 
-- 双击 `PostJson_tk_1.2.exe` 
-<img src="img/13.png" height="240">
+- 双击 `UI_2.0.exe` 
 
-- 选择你存放 `.json` 文件的文件夹
-- 点击开始执行 如果不断弹出运行信息 即说明运行成功
+<img src="img/16.png" height="240">
 
+- 点击`浏览`，选择你存放 `.json` 文件的文件夹
+- 点击`开始` 如果不断弹出运行信息 即说明运行成功
 
 ## 完整代码
 完整代码请查看 [`PostJson_multi.py`](PostJson_multi.py)
