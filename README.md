@@ -1,5 +1,5 @@
 # zjgsu抢课脚本 
-## 使用教程（*更新 2024 - 2025 - 1 ）
+## 使用教程（*更新 2024 - 2025 - 2 ）
 
 ## 观前提醒：
 
@@ -28,7 +28,7 @@
 
 使用此脚本，必要的文件有两项：
 - `JSONs` 文件夹以及其中的`.json`文件（你需要手动配置的抢课信息 请自行创建）
-- `ui_2.0.exe`（信息配置完成后执行抢课程序的脚本）[下载地址](https://github.com/RwandanMtGorilla/ZJGSU_spider/releases/tag/ui_2.0)
+- `ui_2.0.exe`（信息配置完成后执行抢课程序的脚本 版本号可能有变化，请以最新版为准）[下载地址](https://github.com/RwandanMtGorilla/ZJGSU_spider/releases)
 
 使用前请检查两项项文件是否完整。
 
