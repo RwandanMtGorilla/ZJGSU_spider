@@ -1,3 +1,7 @@
 /workbench.md
 /.python-version
 /pyproject.toml
+/dist/
+/build/
+/ui.spec
+/uv.lock
