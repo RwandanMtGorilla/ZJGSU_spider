@@ -62,7 +62,7 @@ class App:
     def __init__(self, root):
         self.root = root
         self.root.title("JSON 请求多进程管理器")
-        self.root.geometry('1750x800')
+        self.root.geometry('2000x800')
         self.root.resizable(False, False)
 
         self.folder_path = './JSONs'  # 默认的JSON文件夹路径
