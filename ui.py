@@ -7,7 +7,8 @@ import time
 from multiprocessing import Process, Manager, freeze_support
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
-from tkinter import filedialog, messagebox, scrolledtext, Canvas, Scrollbar
+from tkinter import filedialog, messagebox, Canvas, Scrollbar, Listbox, Frame
+from collections import defaultdict
 
 
 def load_json_files(folder_path):
@@ -33,24 +34,26 @@ def send_requests_until_success(request_info, log_queue, wait_time):
     while True:
         try:
             response = requests.request(method, url, headers=headers, cookies=cookies, data=data)
-            localtime = time.asctime(time.localtime(time.time()))
+            localtime = time.strftime("%H:%M:%S", time.localtime(time.time()))
         except Exception as e:
-            log_queue.put(f"{localtime} 请求失败，返回: {e}")
+            localtime = time.strftime("%H:%M:%S", time.localtime(time.time()))
+            log_queue.put(f"请求失败，返回: {e}||{localtime}")
+            continue
 
         try:
             response_json = response.json()
             if response_json.get("flag") == "1":
-                log_queue.put(f"{localtime} 成功: {response.text}")
+                log_queue.put(f"成功: {response.text}||{localtime}")
                 time.sleep(1)
                 break
             elif response_json.get("flag") == "0":
-                log_queue.put(f"{localtime} 响应: {response.text} 请先退选当前时段。")
+                log_queue.put(f"响应: {response.text} 请先退选当前时段。||{localtime}")
                 time.sleep(1)
                 break
             else:
-                log_queue.put(f"{localtime} 尝试中, 响应: {response.text}")
+                log_queue.put(f"尝试中, 响应: {response.text}||{localtime}")
         except json.JSONDecodeError:
-            log_queue.put(f"{localtime} 无法解析JSON响应: {response.text}")
+            log_queue.put(f"无法解析JSON响应: {response.text}||{localtime}")
 
         time.sleep(random.uniform(wait_time, wait_time + 0.3))
 
@@ -59,7 +62,7 @@ class App:
     def __init__(self, root):
         self.root = root
         self.root.title("JSON 请求多进程管理器")
-        self.root.geometry('1200x700')
+        self.root.geometry('1750x800')
         self.root.resizable(False, False)
 
         self.folder_path = './JSONs'  # 默认的JSON文件夹路径
@@ -67,6 +70,9 @@ class App:
         self.file_names = []  # 保存每个 JSON 文件的文件名
         self.processes = []
         self.log_queues = []
+        self.log_counts = []  # 存储每个日志框的响应计数
+        self.log_times = []  # 存储每个日志的最新时间
+        self.listboxes = []  # 存储Listbox组件
 
         self.create_widgets()
 
@@ -81,21 +87,34 @@ class App:
 
         # 右侧日志区
         log_frame = ttk.Labelframe(main_frame, text="日志输出", padding=(10, 10), bootstyle=INFO)
-        main_frame.add(log_frame, weight=3)
+        main_frame.add(log_frame, weight=4)
 
-        # 滚动框架用于容纳日志框
-        self.canvas = Canvas(log_frame)
+        # 创建一个容器框架来包含Canvas和滚动条
+        canvas_container = ttk.Frame(log_frame)
+        canvas_container.pack(fill=BOTH, expand=True)
+
+        # 创建垂直滚动条
+        self.main_scrollbar = ttk.Scrollbar(canvas_container, orient=VERTICAL)
+        self.main_scrollbar.pack(side=RIGHT, fill=Y)
+
+        # 创建Canvas
+        self.canvas = Canvas(canvas_container, yscrollcommand=self.main_scrollbar.set)
+        self.canvas.pack(side=LEFT, fill=BOTH, expand=True)
+
+        # 配置滚动条
+        self.main_scrollbar.configure(command=self.canvas.yview)
+
+        # 创建可滚动的框架
         self.scrollable_frame = ttk.Frame(self.canvas)
 
-        # 使用窗口创建可滚动的区域
-        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
-        self.canvas.pack(side=LEFT, fill=BOTH, expand=True)
+        # 将scrollable_frame添加到canvas中
+        self.canvas_window = self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
 
         # 路径选择
         path_label = ttk.Label(control_frame, text="选择 JSON 文件夹路径:")
         path_label.pack(anchor="w", pady=5)
 
-        self.path_entry = ttk.Entry(control_frame, width=30)
+        self.path_entry = ttk.Entry(control_frame, width=25)
         self.path_entry.insert(0, self.folder_path)
         self.path_entry.pack(fill=X, pady=5)
 
@@ -121,8 +140,6 @@ class App:
         info_button = ttk.Button(control_frame, text="信息", command=self.show_info, bootstyle=INFO)
         info_button.pack(fill=X, pady=5)
 
-        self.scroll_texts = []
-
     def browse_folder(self):
         # 选择JSON文件夹
         selected_folder = filedialog.askdirectory(initialdir=self.folder_path, title="选择JSON文件夹")
@@ -144,47 +161,77 @@ class App:
 
     def create_log_windows(self):
         # 清除现有的日志框架
-        self.scroll_texts.clear()
+        self.listboxes.clear()
+        self.log_counts.clear()
+        self.log_times.clear()  # 清除时间记录
         for widget in self.scrollable_frame.winfo_children():
             widget.destroy()
 
-        # 动态调整每个日志框的宽度和高度
+        # 动态调整每个日志框的高度
         num_logs = len(self.file_names)
-        base_width = 45
-        adjusted_width = base_width
-        base_height = 5
-        adjusted_height = max(5, int(base_height * (1/(num_logs+1))))  # 最小高度为1
+        base_height = 8
+        adjusted_height = max(5, int(base_height * (1 / (num_logs * 0.3 + 1))))
 
-        # 创建垂直滚动条并配置
-        scrollbar = Scrollbar(self.canvas, orient="vertical", command=self.canvas.yview)
-        scrollbar.pack(side=RIGHT, fill=Y)
-        self.canvas.configure(yscrollcommand=scrollbar.set)
+        # 绑定Canvas大小变化事件
+        def configure_canvas(event):
+            # 获取Canvas的实际宽度
+            canvas_width = event.width
+            # 更新scrollable_frame的宽度以匹配Canvas宽度
+            self.canvas.itemconfig(self.canvas_window, width=canvas_width)
+            # 强制更新scrollable_frame的布局
+            self.scrollable_frame.update_idletasks()
+            # 更新滚动区域
+            self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
-        # 绑定滚动事件
-        self.scrollable_frame.bind(
-            "<Configure>",
-            lambda e: self.canvas.configure(
-                scrollregion=self.canvas.bbox("all")
-            )
-        )
+        self.canvas.bind('<Configure>', configure_canvas)
 
         # 使用鼠标滚轮滚动
-        self.canvas.bind_all("<MouseWheel>", lambda event: self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units"))
+        def on_mousewheel(event):
+            self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+        self.canvas.bind_all("<MouseWheel>", on_mousewheel)
 
         for i, file_name in enumerate(self.file_names):
             log_queue = Manager().Queue()
             self.log_queues.append(log_queue)
+            self.log_counts.append(defaultdict(int))
+            self.log_times.append(defaultdict(str))  # 添加时间记录
 
-            log_frame = ttk.Frame(self.scrollable_frame)
-            log_frame.pack(fill=X, padx=5, pady=5)
+            # 创建日志框架，使用ttk.Frame以保持一致的样式
+            log_frame = ttk.Frame(self.scrollable_frame, relief="ridge", borderwidth=1)
+            log_frame.pack(fill=BOTH, expand=True, padx=5, pady=5)
 
             log_label = ttk.Label(log_frame, text=file_name)
-            log_label.pack(anchor="w")
+            log_label.pack(anchor="w", padx=5, pady=2)
 
-            # 设置日志框的宽度会根据日志数量自动收窄
-            scroll_text = scrolledtext.ScrolledText(log_frame, width=adjusted_width, height=adjusted_height, wrap=ttk.WORD)
-            scroll_text.pack(fill=X, padx=5, pady=5)
-            self.scroll_texts.append(scroll_text)
+            # 创建Listbox容器，关键修改：使用BOTH fill和expand=True
+            listbox_frame = ttk.Frame(log_frame)
+            listbox_frame.pack(fill=BOTH, expand=True, padx=5, pady=5)
+
+            # 创建Listbox，关键修改：去掉固定宽度限制
+            listbox = Listbox(listbox_frame, height=adjusted_height, font=("Arial", 9))
+            scrollbar_listbox = ttk.Scrollbar(listbox_frame, orient=VERTICAL, command=listbox.yview)
+
+            listbox.configure(yscrollcommand=scrollbar_listbox.set)
+            # 关键修改：确保Listbox完全填充其容器
+            listbox.pack(side=LEFT, fill=BOTH, expand=True)
+            scrollbar_listbox.pack(side=RIGHT, fill=Y)
+
+            self.listboxes.append(listbox)
+
+        # 强制更新布局
+        self.root.update_idletasks()
+        # 更新Canvas配置
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+        # 确保Canvas窗口宽度正确设置
+        def update_canvas_width():
+            canvas_width = self.canvas.winfo_width()
+            if canvas_width > 1:  # 确保Canvas已经被渲染
+                self.canvas.itemconfig(self.canvas_window, width=canvas_width)
+
+        # 延迟执行宽度更新，确保所有组件都已完成初始化
+        self.root.after(100, update_canvas_width)
 
     def clear_logs(self):
         # 清除所有日志队列
@@ -233,23 +280,66 @@ class App:
         import webbrowser
         webbrowser.open("https://github.com/RwandanMtGorilla/ZJGSU_spider/tree/main")
 
-
-
     def update_log(self, index):
         # 更新日志显示
         if not self.processes or not self.processes[index].is_alive():
             return
         try:
-            log = self.log_queues[index].get_nowait()
-            self.scroll_texts[index].insert(ttk.END, log + '\n')
-            self.scroll_texts[index].see(ttk.END)
+            log_with_time = self.log_queues[index].get_nowait()
+
+            # 分离日志内容和时间
+            if "||" in log_with_time:
+                log, current_time = log_with_time.rsplit("||", 1)
+            else:
+                log = log_with_time
+                current_time = time.strftime("%H:%M:%S", time.localtime(time.time()))
+
+            # 更新计数和时间
+            self.log_counts[index][log] += 1
+            self.log_times[index][log] = current_time  # 更新为最新时间
+            count = self.log_counts[index][log]
+            latest_time = self.log_times[index][log]
+
+            # 在列表中查找是否已存在该日志
+            found = False
+            for i in range(self.listboxes[index].size()):
+                item = self.listboxes[index].get(i)
+                # 提取原始日志内容（去掉计数和时间部分）
+                if ' (×' in item:
+                    original_log = item.split(' (×')[0]
+                elif '[' in item and ']' in item:
+                    # 处理只有时间没有计数的情况
+                    original_log = item.split(' [')[0]
+                else:
+                    original_log = item
+
+                if original_log == log:
+                    # 更新现有项目
+                    self.listboxes[index].delete(i)
+                    if count > 1:
+                        display_text = f"{log} (×{count}) [{latest_time}]"
+                    else:
+                        display_text = f"{log} [{latest_time}]"
+                    self.listboxes[index].insert(i, display_text)
+                    found = True
+                    break
+
+            if not found:
+                # 添加新项目
+                if count > 1:
+                    display_text = f"{log} (×{count}) [{latest_time}]"
+                else:
+                    display_text = f"{log} [{latest_time}]"
+                self.listboxes[index].insert('end', display_text)
+                self.listboxes[index].see('end')
+
         except:
             pass
         self.root.after(500, lambda: self.update_log(index))
 
 
 if __name__ == '__main__':
-    freeze_support()  # 这行在Windows上是必要的，用于多进程在Windows上运行时避免无限递归
-    root = ttk.Window(themename="litera")  # 使用 ttkbootstrap 的主题
+    freeze_support()
+    root = ttk.Window(themename="litera")
     app = App(root)
     root.mainloop()

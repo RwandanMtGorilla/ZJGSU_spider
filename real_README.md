@@ -2,6 +2,7 @@
 ## 环境准备
 ```shell
 # 下载uv
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 
 # 克隆项目
 git clone https://github.com/RwandanMtGorilla/ZJGSU_spider.git
@@ -12,16 +13,12 @@ uv init
 
 # 启动虚拟环境
 .venv\Scripts\activate
-
 uv pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple 
-
-
 ```
 
 ## 启动
 ```shell
 uv run ui.py
-
 ```
 
 ## 打包
